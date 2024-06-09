@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Draw</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Google Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    body {
+      background-color: #f0f0f0;
+    }
+
+    #canvas-container {
+      width: 100%;
+      margin-top: 20px;
+      position: relative;
+
+    }
+
+    #canvas {
+      border: 1px solid #ccc;
+      touch-action: none;
+      /* Disable default touch actions to prevent scrolling */
+      width: 100%;
+      height: 100%;
+    }
+
+    .controls {
+      width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      background: #f0f0f0;
+    }
+
+    .controls button {
+      width: 100%;
+      margin-bottom: 10px;
+      border-radius: 20px;
+    }
+
+    .slider-container {
+      width: 100%;
+      margin-top: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      /* Push slider to bottom */
+    }
+
+    #stroke-slider {
+      margin: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      background: #e0e0e0;
+      outline: none;
+      opacity: 0.7;
+      transition: opacity 0.15s ease-in-out;
+      border-radius: 5px;
+    }
+
+    #stroke-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: black;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+    
+    #stroke-slider::-webkit-slider-runnable-track {
+      height: 20px;
+      background: lightblue;
+      border-radius: 30px;
+      outline: 5px solid black;
+    }
+
+    #stroke-slider::-webkit-slider-thumb:hover {
+      background: black;
+    }
+
+    /* Style for tap indicator */
+    .tap-indicator {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: rgba(0, 0, 0, 0.5);
+      pointer-events: none;
+      /* Ignore pointer events so it doesn't interfere with canvas */
+      display: none;
+      /* Initially hidden */
+    }
+    
+    .color-picker {
+      height: 30px;
+      width: 60px;
+      margin: 0px 30px;
+      outline: 1px solid black;
+      border-radius: 30px;
+    }
+    
+    .color-picker::-webkit-color-swatch {
+      border-radius: 40px;
+      margin: 1px 5px;
+      border: none;
+    }
+    
+    .color-picker-container {
+      width: 100%;
+      
+    }
+    
+    .control-buttons {
+      display: grid;
+      grid-template-columns: 50% 50%;
+      grid-template-rows: 50% 50%;
+      width: 100%;
+      margin: 20px 0px;
+    }
+    
+    .control-buttons button {
+      margin: 5px;
+      width: calc(100% - 10px);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div id="canvas-container">
+      <canvas id="canvas" width="330" height="330"></canvas>
+      <li id="tap-indicator" class="tap-indicator"></li>
+    </div>
+    <div class="controls">
+      <div class="control-buttons">
+              <button class="btn btn-primary" onclick="clearCanvas()">Clear</button>
+      <button class="btn btn-secondary" onclick="eraseMode()">Erase</button>
+      <button class="btn btn-success" onclick="newDrawing()">New Drawing</button>
+      </div>
+
+      <div class="color-picker-container">
+          <label for="color-picker">Pencil Color</label>
+          <input id="color-picker" name="color-picker" class="color-picker" type="color"></input>
+      </div>
+      <div class="slider-container">
+        <label for="stroke-slider">Stroke</label>
+        <input type="range" id="stroke-slider" min="1" max="20" value="5" step="1" onchange="changeStrokeWidth(this.value)">
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies (jQuery and Popper.js) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const colorPicker = document.getElementById("color-picker");
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let eraseModeActive = false;
+    let lastX = 0;
+    let lastY = 0;
+    let strokeWidth = 5; // Default stroke width
+    let strokeColor = colorPicker.value;
+
+    const tapIndicator = document.getElementById('tap-indicator');
+    
+    colorPicker.addEventListener('change', updatePencilColor);
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('touchstart', startDrawing);
+
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('touchmove', draw);
+
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('touchend', stopDrawing);
+
+    function startDrawing(e) {
+      e.preventDefault();
+      isDrawing = true;
+      [lastX, lastY] = [e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop];
+
+      // Show and position tap indicator
+      tapIndicator.style.display = 'block';
+      updateTapIndicatorPosition(e);
+    }
+    
+    function updatePencilColor() {
+      strokeColor = colorPicker.value;
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+
+      let currentX, currentY;
+      if (e.type === 'touchmove') {
+        currentX = e.touches[0].clientX - canvas.offsetLeft;
+        currentY = e.touches[0].clientY - canvas.offsetTop;
+      } else {
+        currentX = e.clientX - canvas.offsetLeft;
+        currentY = e.clientY - canvas.offsetTop;
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(currentX, currentY);
+      ctx.strokeStyle = eraseModeActive ? '#f0f0f0' : strokeColor; // Erase or draw based on mode
+      ctx.lineWidth = strokeWidth;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      [lastX, lastY] = [currentX, currentY];
+
+      // Update tap indicator position
+      updateTapIndicatorPosition(e);
+    }
+
+    function updateTapIndicatorPosition(e) {
+      // Position tap indicator under touch or mouse
+      let tapX, tapY;
+      if (e.type === 'touchstart' || e.type === 'touchmove') {
+        tapX = e.touches[0].clientX - canvas.offsetLeft - tapIndicator.offsetWidth / 2;
+        tapY = e.touches[0].clientY - canvas.offsetTop - tapIndicator.offsetHeight / 2;
+      } else {
+        tapX = e.clientX - canvas.offsetLeft - tapIndicator.offsetWidth / 2;
+        tapY = e.clientY - canvas.offsetTop - tapIndicator.offsetHeight / 2;
+      }
+
+      tapIndicator.style.left = tapX + 'px';
+      tapIndicator.style.top = tapY + 'px';
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+      tapIndicator.style.display = 'none'; // Hide tap indicator when drawing stops
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function eraseMode() {
+      eraseModeActive = !eraseModeActive;
+      if (eraseModeActive) {
+        canvas.style.cursor = 'cell';
+      } else {
+        canvas.style.cursor = 'crosshair';
+      }
+    }
+
+    function changeStrokeWidth(value) {
+      strokeWidth = parseInt(value);
+    }
+
+    function newDrawing() {
+      clearCanvas();
+      eraseModeActive = false;
+      canvas.style.cursor = 'crosshair';
+    }
+  </script>
+</body>
+</html>
