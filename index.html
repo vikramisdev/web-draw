@@ -154,6 +154,7 @@
               <button class="btn btn-primary" onclick="clearCanvas()">Clear</button>
       <button class="btn btn-secondary" onclick="eraseMode()">Erase</button>
       <button class="btn btn-success" onclick="newDrawing()">New Drawing</button>
+            <button class="btn btn-success" onclick="downloadCanvas()">Download</button>
       </div>
 
       <div class="color-picker-container">
@@ -279,6 +280,25 @@
       clearCanvas();
       eraseModeActive = false;
       canvas.style.cursor = 'crosshair';
+    }
+    
+    function downloadCanvas() {
+      // Convert canvas to data URL
+      const dataURL = canvas.toDataURL('image/png');
+
+      // Create temporary link element
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = 'canvas-image.png';
+
+      // Append to the body
+      document.body.appendChild(link);
+
+      // Trigger the download
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
     }
   </script>
 </body>
