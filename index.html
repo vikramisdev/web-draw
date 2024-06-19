@@ -90,6 +90,47 @@
       font-size: 20px;
     }
     
+    .tools-container {
+      position: absolute;
+      left: 20px;
+      bottom: 20px;
+    }
+    
+    .tools-icon {
+      height: 50px;
+      width: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      background: lightgray;
+      font-size: 20px;
+      margin-top: 10px;
+    }
+    
+    .tools li {
+      height: 50px;
+      width: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      background: lightgray;
+      font-size: 20px;
+      margin-top: 5px;
+    }
+    
+    .tools {
+      display: none;
+    }
+    
+    .pencil-size {
+      position: absolute;
+      left: 60px;
+      bottom: 20px;
+      width: 80px;
+    }
+    
     .active {
       background: lightblue;
     }
@@ -99,7 +140,7 @@
 <body>
   <div class="main-container">
     <div id="canvas-container">
-      <canvas id="canvas" width="330" height="330"></canvas>
+      <canvas id="canvas" class="canvas" height="330" width="330"></canvas>
       <li id="tap-indicator" class="tap-indicator"></li>
     </div>
     <div class="controls">
@@ -113,6 +154,16 @@
       
       <div class="erase-container">
         <li onclick="eraseMode()" class="temp erase-icon bi-eraser-fill"></li>
+      </div>
+      
+      <div class="tools-container">
+        <div class="tools">
+          <li class="bi-pencil"></li>
+          <li class="bi-paint-bucket"></li>
+          <li class="bi-arrows-move"></li>
+        </div>
+        <li class="tools-icon bi-caret-down-fill"></li>
+        <input min="1" max="100" class="pencil-size" type="range"></input>
       </div>
     </div>
   </div>
@@ -151,6 +202,15 @@
     $(".erase-icon").click(function() {
       $(this).toggleClass("active", "temp");
     });
+    
+    $(".tools-icon").click(function() {
+      $(this).toggleClass("bi-caret-up-fill", "bi-caret-down-fill");
+      $(".tools").toggle();
+    });
+    
+    $(".pencil-size").on("change", function() {
+      changeStrokeWidth($(this).val());
+    })
 
     function startDrawing(e) {
       e.preventDefault();
