@@ -22,10 +22,7 @@
     }
 
     #canvas-container {
-      width: 100%;
-      margin-top: 20px;
-      position: relative;
-
+      margin: 20px;
     }
 
     #canvas {
@@ -33,137 +30,89 @@
       touch-action: none;
       /* Disable default touch actions to prevent scrolling */
       width: 100%;
-      height: 100%;
-    }
-
-    .controls {
-      width: 100%;
-      padding: 20px;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      background: #f0f0f0;
-    }
-
-    .controls button {
-      width: 100%;
-      margin-bottom: 10px;
+      height: calc(100vh - 100px);
       border-radius: 20px;
-    }
-
-    .slider-container {
-      width: 100%;
-      margin-top: auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      /* Push slider to bottom */
-    }
-
-    #stroke-slider {
-      margin: 10px;
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 10px;
-      background: #e0e0e0;
-      outline: none;
-      opacity: 0.7;
-      transition: opacity 0.15s ease-in-out;
-      border-radius: 5px;
-    }
-
-    #stroke-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      background: black;
-      cursor: pointer;
-      border-radius: 50%;
-    }
-    
-    #stroke-slider::-webkit-slider-runnable-track {
-      height: 20px;
-      background: lightblue;
-      border-radius: 30px;
-      outline: 5px solid black;
-    }
-
-    #stroke-slider::-webkit-slider-thumb:hover {
-      background: black;
-    }
-
-    /* Style for tap indicator */
-    .tap-indicator {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background-color: rgba(0, 0, 0, 0.5);
-      pointer-events: none;
-      /* Ignore pointer events so it doesn't interfere with canvas */
-      display: none;
-      /* Initially hidden */
     }
     
     .color-picker {
-      height: 30px;
-      width: 60px;
-      margin: 0px 30px;
-      outline: 1px solid black;
-      border-radius: 30px;
-    }
-    
-    .color-picker::-webkit-color-swatch {
-      border-radius: 40px;
-      margin: 1px 5px;
-      border: none;
-    }
-    
-    .color-picker-container {
-      width: 100%;
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      -webkit-border-radius: 50%;
+      -webkit-appearance: none;
+      appearance: none;
       
     }
     
-    .control-buttons {
-      display: grid;
-      grid-template-columns: 50% 50%;
-      grid-template-rows: 50% 50%;
-      width: 100%;
-      margin: 20px 0px;
+    .color-picker::-webkit-color-swatch {
+      border: none;
+      border-radius: 50%;
+      height: 40px;
+      width: 40px;
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      -webkit-border-radius: 50%;
+      -webkit-appearance: none;
+      appearance: none;
     }
     
-    .control-buttons button {
-      margin: 5px;
-      width: calc(100% - 10px);
+    .delete-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      background: red;
+      height: 50px;
+      width: 50px;
+      position: absolute;
+      right: 80px;
+      bottom: 20px;
+      font-size: 20px;
+      color: white;
+    }
+    
+    .erase-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      background: white;
+      height: 50px;
+      width: 50px;
+      position: absolute;
+      right: 140px;
+      bottom: 20px;
+      color: black;
+      font-size: 20px;
+    }
+    
+    .active {
+      background: lightblue;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
+  <div class="main-container">
     <div id="canvas-container">
       <canvas id="canvas" width="330" height="330"></canvas>
       <li id="tap-indicator" class="tap-indicator"></li>
     </div>
     <div class="controls">
-      <div class="control-buttons">
-              <button class="btn btn-primary" onclick="clearCanvas()">Clear</button>
-      <button class="btn btn-secondary" onclick="eraseMode()">Erase</button>
-      <button class="btn btn-success" onclick="newDrawing()">New Drawing</button>
-            <button class="btn btn-success" onclick="downloadCanvas()">Download</button>
-      </div>
-
       <div class="color-picker-container">
-          <label for="color-picker">Pencil Color</label>
-          <input id="color-picker" name="color-picker" class="color-picker" type="color"></input>
+        <input id="color-picker" type="color" class="color-picker"></input>
       </div>
-      <div class="slider-container">
-        <label for="stroke-slider">Stroke</label>
-        <input type="range" id="stroke-slider" min="1" max="20" value="5" step="1" onchange="changeStrokeWidth(this.value)">
+      
+      <div class="delete-canvas">
+        <li onclick="clearCanvas()" class="delete-icon bi-trash"></li>
+      </div>
+      
+      <div class="erase-container">
+        <li onclick="eraseMode()" class="temp erase-icon bi-eraser-fill"></li>
       </div>
     </div>
   </div>
@@ -176,6 +125,7 @@
   <script>
     const canvas = document.getElementById('canvas');
     const colorPicker = document.getElementById("color-picker");
+    const eraseIcon = document.querySelector(".erase-icon");
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
     let eraseModeActive = false;
@@ -185,7 +135,7 @@
     let strokeColor = colorPicker.value;
 
     const tapIndicator = document.getElementById('tap-indicator');
-    
+
     colorPicker.addEventListener('change', updatePencilColor);
 
     canvas.addEventListener('mousedown', startDrawing);
@@ -197,6 +147,10 @@
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseleave', stopDrawing);
     canvas.addEventListener('touchend', stopDrawing);
+    
+    $(".erase-icon").click(function() {
+      $(this).toggleClass("active", "temp");
+    });
 
     function startDrawing(e) {
       e.preventDefault();
@@ -207,7 +161,7 @@
       tapIndicator.style.display = 'block';
       updateTapIndicatorPosition(e);
     }
-    
+
     function updatePencilColor() {
       strokeColor = colorPicker.value;
     }
@@ -218,11 +172,11 @@
 
       let currentX, currentY;
       if (e.type === 'touchmove') {
-        currentX = e.touches[0].clientX - canvas.offsetLeft;
-        currentY = e.touches[0].clientY - canvas.offsetTop;
+        currentX = e.touches[0].clientX;
+        currentY = e.touches[0].clientY/2;
       } else {
-        currentX = e.clientX - canvas.offsetLeft;
-        currentY = e.clientY - canvas.offsetTop;
+        currentX = e.clientX;
+        currentY = e.clientY;
       }
 
       ctx.beginPath();
@@ -243,11 +197,11 @@
       // Position tap indicator under touch or mouse
       let tapX, tapY;
       if (e.type === 'touchstart' || e.type === 'touchmove') {
-        tapX = e.touches[0].clientX - canvas.offsetLeft - tapIndicator.offsetWidth / 2;
-        tapY = e.touches[0].clientY - canvas.offsetTop - tapIndicator.offsetHeight / 2;
+        tapX = e.touches[0].clientX - canvas.offsetLeft - tapIndicator.offsetWidth;
+        tapY = e.touches[0].clientY - canvas.offsetTop - tapIndicator.offsetHeight;
       } else {
-        tapX = e.clientX - canvas.offsetLeft - tapIndicator.offsetWidth / 2;
-        tapY = e.clientY - canvas.offsetTop - tapIndicator.offsetHeight / 2;
+        tapX = e.clientX - canvas.offsetLeft - tapIndicator.offsetWidth;
+        tapY = e.clientY - canvas.offsetTop - tapIndicator.offsetHeight;
       }
 
       tapIndicator.style.left = tapX + 'px';
@@ -281,7 +235,7 @@
       eraseModeActive = false;
       canvas.style.cursor = 'crosshair';
     }
-    
+
     function downloadCanvas() {
       // Convert canvas to data URL
       const dataURL = canvas.toDataURL('image/png');
@@ -301,5 +255,8 @@
       document.body.removeChild(link);
     }
   </script>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </body>
+
 </html>
