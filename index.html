@@ -33,7 +33,7 @@
       height: calc(100vh - 100px);
       border-radius: 20px;
     }
-    
+
     .color-picker {
       height: 50px;
       width: 50px;
@@ -44,9 +44,9 @@
       -webkit-border-radius: 50%;
       -webkit-appearance: none;
       appearance: none;
-      
+
     }
-    
+
     .color-picker::-webkit-color-swatch {
       border: none;
       border-radius: 50%;
@@ -59,7 +59,7 @@
       -webkit-appearance: none;
       appearance: none;
     }
-    
+
     .delete-icon {
       display: flex;
       justify-content: center;
@@ -74,7 +74,7 @@
       font-size: 20px;
       color: white;
     }
-    
+
     .erase-icon {
       display: flex;
       justify-content: center;
@@ -89,13 +89,13 @@
       color: black;
       font-size: 20px;
     }
-    
+
     .tools-container {
       position: absolute;
       left: 20px;
       bottom: 20px;
     }
-    
+
     .tools-icon {
       height: 50px;
       width: 50px;
@@ -107,8 +107,8 @@
       font-size: 20px;
       margin-top: 10px;
     }
-    
-    .tools li {
+
+    .tool {
       height: 50px;
       width: 50px;
       display: flex;
@@ -119,20 +119,29 @@
       font-size: 20px;
       margin-top: 5px;
     }
-    
+
     .tools {
       display: none;
     }
-    
+
     .pencil-size {
       position: absolute;
       left: 60px;
       bottom: 20px;
       width: 80px;
     }
-    
+
+    .fullscreen-icon {
+      position: absolute;
+      left: 35px;
+      top: 35px;
+      font-weight: bolder;
+      font-size: 20px;
+    }
+
     .active {
       background: lightblue;
+      
     }
   </style>
 </head>
@@ -140,31 +149,33 @@
 <body>
   <div class="main-container">
     <div id="canvas-container">
-      <canvas id="canvas" class="canvas" height="330" width="330"></canvas>
+      <canvas id="canvas" class="canvas" height="1000" width="1000"></canvas>
       <li id="tap-indicator" class="tap-indicator"></li>
     </div>
     <div class="controls">
       <div class="color-picker-container">
         <input id="color-picker" type="color" class="color-picker"></input>
       </div>
-      
+
       <div class="delete-canvas">
         <li onclick="clearCanvas()" class="delete-icon bi-trash"></li>
       </div>
-      
+
       <div class="erase-container">
-        <li onclick="eraseMode()" class="temp erase-icon bi-eraser-fill"></li>
+        <li onclick="eraseMode()" class="erase-icon bi-eraser-fill"></li>
       </div>
-      
+
       <div class="tools-container">
         <div class="tools">
-          <li class="bi-pencil"></li>
-          <li class="bi-paint-bucket"></li>
-          <li class="bi-arrows-move"></li>
+          <li class="tool select-shape bi-subtract"></li>
+          <li class="tool color-fill bi-paint-bucket"></li>
+          <li class="tool move-canvas bi-arrows-move"></li>
         </div>
         <li class="tools-icon bi-caret-down-fill"></li>
-        <input min="1" max="100" class="pencil-size" type="range"></input>
+        <input value="3" min="1" max="100" class="pencil-size" type="range"></input>
       </div>
+
+      <li class="fullscreen-icon bi-fullscreen"></li>
     </div>
   </div>
 
@@ -180,9 +191,11 @@
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
     let eraseModeActive = false;
+    let mode = "pencil"
     let lastX = 0;
     let lastY = 0;
-    let strokeWidth = 5; // Default stroke width
+    let isFillOn = false;
+    let strokeWidth = 3; // Default stroke width
     let strokeColor = colorPicker.value;
 
     const tapIndicator = document.getElementById('tap-indicator');
@@ -198,24 +211,43 @@
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseleave', stopDrawing);
     canvas.addEventListener('touchend', stopDrawing);
-    
+
     $(".erase-icon").click(function() {
-      $(this).toggleClass("active", "temp");
+      $(this).toggleClass("active");
     });
-    
+
+    $(".color-fill").click(function() {
+      $(this).toggleClass("active");
+      if(!isFillOn) {
+        isFillOn = true;
+      }
+      else {
+        isFillOn = false;
+      }
+    });
+
+    $(".move-canvas").click(function() {
+      $(this).toggleClass("active");
+    })
+
     $(".tools-icon").click(function() {
       $(this).toggleClass("bi-caret-up-fill", "bi-caret-down-fill");
       $(".tools").toggle();
     });
-    
+
     $(".pencil-size").on("change", function() {
       changeStrokeWidth($(this).val());
-    })
+    });
+
+    $(".fullscreen-icon").click(function() {
+      $(this).toggleClass("bi-fullscreen-exit", "bi-fullscreen");
+    });
 
     function startDrawing(e) {
       e.preventDefault();
       isDrawing = true;
-      [lastX, lastY] = [e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop];
+
+      [lastX, lastY] = [e.clientX, e.clientY];
 
       // Show and position tap indicator
       tapIndicator.style.display = 'block';
@@ -226,46 +258,71 @@
       strokeColor = colorPicker.value;
     }
 
+    const scaleFactorX = canvas.width / canvas.offsetWidth;
+    const scaleFactorY = canvas.height / canvas.offsetHeight;
+
+    function startDrawing(e) {
+      if (isFillOn) {
+        fillCanvas(colorPicker.value);
+        return;
+      }
+      
+      e.preventDefault();
+      isDrawing = true;
+
+      const { x, y } = getCanvasCoordinates(e);
+    [lastX, lastY] = [x, y];
+
+      // Show and position tap indicator
+      tapIndicator.style.display = 'block';
+      updateTapIndicatorPosition(e);
+    }
+
+    function getCanvasCoordinates(event) {
+      const rect = canvas.getBoundingClientRect();
+      let clientX, clientY;
+
+      if (event.touches && event.touches.length > 0) {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+      } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      }
+
+      const x = (clientX - rect.left) * scaleFactorX;
+      const y = (clientY - rect.top) * scaleFactorY;
+
+      return { x, y };
+    }
+
     function draw(e) {
       if (!isDrawing) return;
       e.preventDefault();
 
-      let currentX, currentY;
-      if (e.type === 'touchmove') {
-        currentX = e.touches[0].clientX;
-        currentY = e.touches[0].clientY/2;
-      } else {
-        currentX = e.clientX;
-        currentY = e.clientY;
-      }
+      const { x, y } = getCanvasCoordinates(e);
+
+      ctx.lineJoin = "round";
 
       ctx.beginPath();
       ctx.moveTo(lastX, lastY);
-      ctx.lineTo(currentX, currentY);
+      ctx.lineTo(x, y);
       ctx.strokeStyle = eraseModeActive ? '#f0f0f0' : strokeColor; // Erase or draw based on mode
       ctx.lineWidth = strokeWidth;
       ctx.lineCap = 'round';
       ctx.stroke();
 
-      [lastX, lastY] = [currentX, currentY];
+    [lastX, lastY] = [x, y];
 
       // Update tap indicator position
       updateTapIndicatorPosition(e);
     }
 
     function updateTapIndicatorPosition(e) {
-      // Position tap indicator under touch or mouse
-      let tapX, tapY;
-      if (e.type === 'touchstart' || e.type === 'touchmove') {
-        tapX = e.touches[0].clientX - canvas.offsetLeft - tapIndicator.offsetWidth;
-        tapY = e.touches[0].clientY - canvas.offsetTop - tapIndicator.offsetHeight;
-      } else {
-        tapX = e.clientX - canvas.offsetLeft - tapIndicator.offsetWidth;
-        tapY = e.clientY - canvas.offsetTop - tapIndicator.offsetHeight;
-      }
+      const { x, y } = getCanvasCoordinates(e);
 
-      tapIndicator.style.left = tapX + 'px';
-      tapIndicator.style.top = tapY + 'px';
+      tapIndicator.style.left = `${x / scaleFactorX}px`;
+      tapIndicator.style.top = `${y / scaleFactorY}px`;
     }
 
     function stopDrawing() {
@@ -288,6 +345,11 @@
 
     function changeStrokeWidth(value) {
       strokeWidth = parseInt(value);
+    }
+
+    function fillCanvas(color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     function newDrawing() {
@@ -315,7 +377,7 @@
       document.body.removeChild(link);
     }
   </script>
-  
+
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </body>
 
