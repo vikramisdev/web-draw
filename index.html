@@ -18,11 +18,11 @@
 
     body {
       background-color: #f0f0f0;
-      height: 100vh;
     }
 
     #canvas-container {
-      margin: 20px;
+      margin: 20px 20px 0px 20px;
+      height: 80%;
     }
 
     #canvas {
@@ -30,7 +30,7 @@
       touch-action: none;
       /* Disable default touch actions to prevent scrolling */
       width: 100%;
-      height: calc(100vh - 100px);
+      height: calc(100vh - 150px);
       border-radius: 20px;
     }
 
@@ -38,9 +38,6 @@
       height: 50px;
       width: 50px;
       border-radius: 50%;
-      position: absolute;
-      right: 20px;
-      bottom: 20px;
       -webkit-border-radius: 50%;
       -webkit-appearance: none;
       appearance: none;
@@ -52,96 +49,89 @@
       border-radius: 50%;
       height: 40px;
       width: 40px;
-      position: absolute;
-      top: 4px;
-      left: 4px;
       -webkit-border-radius: 50%;
       -webkit-appearance: none;
       appearance: none;
     }
 
-    .delete-icon {
+    .delete-icon,
+    .erase-icon,
+    .tools-icon,
+    .select-shape,
+    .move-canvas,
+    .color-fill,
+    .download {
       display: flex;
       justify-content: center;
       align-items: center;
       border-radius: 50%;
-      background: red;
       height: 50px;
       width: 50px;
-      position: absolute;
-      right: 80px;
-      bottom: 20px;
       font-size: 20px;
       color: white;
     }
 
-    .erase-icon {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 50%;
-      background: white;
-      height: 50px;
-      width: 50px;
-      position: absolute;
-      right: 140px;
-      bottom: 20px;
-      color: black;
-      font-size: 20px;
+    .select-shape,
+    .color-fill,
+    .move-canvas {
+      background: black;
+      color: whitesmoke;
+      margin-bottom: 5px;
+    }
+    
+    .download {
+      background: darkorange;
+      margin-bottom: 5px;
     }
 
-    .tools-container {
-      position: absolute;
-      left: 20px;
-      bottom: 20px;
+    .delete-icon {
+      background: red;
+      color: white;
+    }
+
+    .erase-icon {
+      background: white;
+      color: black;
     }
 
     .tools-icon {
-      height: 50px;
-      width: 50px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 50%;
-      background: lightgray;
-      font-size: 20px;
-      margin-top: 10px;
+      background: lightsteelblue;
+      color: black;
     }
 
-    .tool {
-      height: 50px;
-      width: 50px;
+    .tools-container {
       display: flex;
-      justify-content: center;
       align-items: center;
-      border-radius: 50%;
-      background: lightgray;
-      font-size: 20px;
-      margin-top: 5px;
+      height: 10%;
+      background: lightblue;
+      border-radius: 30px;
+      padding: 5px 10px;
+      margin: 0px 20px 0px 20px;
+      gap: 10px;
     }
 
-    .tools {
+    .tools-elements {
       display: none;
+      position: absolute;
+      left: 30px;
+      bottom: 80px;
     }
 
-    .pencil-size {
-      position: absolute;
-      left: 60px;
-      bottom: 20px;
-      width: 80px;
+    .slider {
+      width: 50px;
     }
 
-    .fullscreen-icon {
+    .fullscreen-canvas {
       position: absolute;
-      left: 35px;
       top: 35px;
-      font-weight: bolder;
-      font-size: 20px;
+      left: 35px;
+      color: black;
+      font-size: 18px;
     }
 
     .active {
-      background: lightblue;
-      
+      background: lightcyan;
+      color: black;
     }
   </style>
 </head>
@@ -151,31 +141,34 @@
     <div id="canvas-container">
       <canvas id="canvas" class="canvas" height="1000" width="1000"></canvas>
       <li id="tap-indicator" class="tap-indicator"></li>
+      <li class="fullscreen-canvas bi-fullscreen"></li>
     </div>
     <div class="controls">
-      <div class="color-picker-container">
-        <input id="color-picker" type="color" class="color-picker"></input>
-      </div>
-
-      <div class="delete-canvas">
-        <li onclick="clearCanvas()" class="delete-icon bi-trash"></li>
-      </div>
-
-      <div class="erase-container">
-        <li onclick="eraseMode()" class="erase-icon bi-eraser-fill"></li>
-      </div>
-
       <div class="tools-container">
         <div class="tools">
-          <li class="tool select-shape bi-subtract"></li>
-          <li class="tool color-fill bi-paint-bucket"></li>
-          <li class="tool move-canvas bi-arrows-move"></li>
+          <li class="tools-icon bi-caret-down-fill"></li>
+          <div class="tools-elements">
+            <li class="tool download bi-download"></li>
+            <li class="tool select-shape bi-subtract"></li>
+            <li class="tool color-fill bi-paint-bucket"></li>
+            <li class="tool move-canvas bi-arrows-move"></li>
+          </div>
         </div>
-        <li class="tools-icon bi-caret-down-fill"></li>
-        <input value="3" min="1" max="100" class="pencil-size" type="range"></input>
-      </div>
 
-      <li class="fullscreen-icon bi-fullscreen"></li>
+        <input class="slider pencil-stroke" type="range" value="3" min="1" max="100"></input>
+
+        <div class="erase-container">
+          <li onclick="eraseMode()" class="erase-icon bi-eraser-fill"></li>
+        </div>
+
+        <div class="delete-canvas">
+          <li onclick="clearCanvas()" class="delete-icon bi-trash"></li>
+        </div>
+
+        <div class="color-picker-container">
+          <input id="color-picker" type="color" class="color-picker"></input>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -218,7 +211,7 @@
 
     $(".color-fill").click(function() {
       $(this).toggleClass("active");
-      if(!isFillOn) {
+      if (!isFillOn) {
         isFillOn = true;
       }
       else {
@@ -232,27 +225,21 @@
 
     $(".tools-icon").click(function() {
       $(this).toggleClass("bi-caret-up-fill", "bi-caret-down-fill");
-      $(".tools").toggle();
+      $(".tools-elements").toggle()
     });
 
-    $(".pencil-size").on("change", function() {
+    $(".pencil-stroke").on("change", function() {
       changeStrokeWidth($(this).val());
     });
 
-    $(".fullscreen-icon").click(function() {
-      $(this).toggleClass("bi-fullscreen-exit", "bi-fullscreen");
+    $(".fullscreen-canvas").click(function() {
+      $(this).toggleClass("bi-x");
+      $(".tools-container").toggle();
     });
-
-    function startDrawing(e) {
-      e.preventDefault();
-      isDrawing = true;
-
-      [lastX, lastY] = [e.clientX, e.clientY];
-
-      // Show and position tap indicator
-      tapIndicator.style.display = 'block';
-      updateTapIndicatorPosition(e);
-    }
+    
+    $(".download").click(function() {
+      downloadCanvas();
+    });
 
     function updatePencilColor() {
       strokeColor = colorPicker.value;
@@ -266,7 +253,7 @@
         fillCanvas(colorPicker.value);
         return;
       }
-      
+
       e.preventDefault();
       isDrawing = true;
 
@@ -302,13 +289,16 @@
 
       const { x, y } = getCanvasCoordinates(e);
 
-      ctx.lineJoin = "round";
+      //ctx.lineJoin = "round";
 
       ctx.beginPath();
       ctx.moveTo(lastX, lastY);
       ctx.lineTo(x, y);
       ctx.strokeStyle = eraseModeActive ? '#f0f0f0' : strokeColor; // Erase or draw based on mode
       ctx.lineWidth = strokeWidth;
+      /*ctx.textAlign = "center"
+      ctx.font = "40px Ariel"
+      ctx.fillText("Hello World", canvas.width / 2, canvas.height / 2)*/ // todo
       ctx.lineCap = 'round';
       ctx.stroke();
 
