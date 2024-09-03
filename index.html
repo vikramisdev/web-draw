@@ -9,6 +9,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Google Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/fabric@6.4.1/dist/index.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -17,7 +19,7 @@
     }
 
     body {
-      background-color: #f0f0f0;
+      background-color: ghostwhite;
     }
 
     #canvas-container {
@@ -37,19 +39,17 @@
     .color-picker {
       height: 50px;
       width: 50px;
-      border-radius: 50%;
+      border-radius: 0;
       -webkit-border-radius: 50%;
       -webkit-appearance: none;
       appearance: none;
-
+      cursor: pointer;
     }
 
     .color-picker::-webkit-color-swatch {
       border: none;
-      border-radius: 50%;
-      height: 40px;
-      width: 40px;
-      -webkit-border-radius: 50%;
+      width: 10px;
+      -webkit-border-radius: 100%;
       -webkit-appearance: none;
       appearance: none;
     }
@@ -69,6 +69,7 @@
       width: 50px;
       font-size: 20px;
       color: white;
+      cursor: pointer;
     }
 
     .select-shape,
@@ -78,7 +79,7 @@
       color: whitesmoke;
       margin-bottom: 5px;
     }
-    
+
     .download {
       background: darkorange;
       margin-bottom: 5px;
@@ -103,7 +104,7 @@
       display: flex;
       align-items: center;
       height: 10%;
-      background: lightblue;
+      background: #1e1e1e;
       border-radius: 30px;
       padding: 5px 10px;
       margin: 0px 20px 0px 20px;
@@ -130,8 +131,19 @@
     }
 
     .active {
-      background: lightcyan;
+      background: rgb(0, 255, 170);
       color: black;
+    }
+
+    @media screen and (min-width: 770px) {
+        .tools-elements {
+          margin-bottom: 60px;
+        }
+
+        .tools-container {
+          padding: 30px 20px;
+          border-radius: 80px;
+        }
     }
   </style>
 </head>
@@ -155,7 +167,7 @@
           </div>
         </div>
 
-        <input class="slider pencil-stroke" type="range" value="3" min="1" max="100"></input>
+        <input class="slider pencil-stroke" type="range" value="3" min="1" max="100"/>
 
         <div class="erase-container">
           <li onclick="eraseMode()" class="erase-icon bi-eraser-fill"></li>
@@ -166,7 +178,7 @@
         </div>
 
         <div class="color-picker-container">
-          <input id="color-picker" type="color" class="color-picker"></input>
+          <input id="color-picker" type="color" class="color-picker" />
         </div>
       </div>
     </div>
@@ -236,7 +248,7 @@
       $(this).toggleClass("bi-x");
       $(".tools-container").toggle();
     });
-    
+
     $(".download").click(function() {
       downloadCanvas();
     });
@@ -366,6 +378,7 @@
       // Clean up
       document.body.removeChild(link);
     }
+
   </script>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
