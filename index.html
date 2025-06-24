@@ -1,387 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web Draw</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Google Material Icons -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Draw - Final</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <script src="https://cdn.jsdelivr.net/npm/fabric@6.4.1/dist/index.min.js"></script>
   <style>
+    :root {
+      --primary: #6750a4;
+      --on-primary: #ffffff;
+      --background: #262626;
+      --surface: rgba(0, 0, 0, 0.6);
+      --outline: #555;
+      --shadow: rgba(0, 0, 0, 0.25);
+      --hover-bg: rgba(255, 255, 255, 0.08);
+    }
+
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      list-style: none;
     }
 
-    body {
-      background-color: ghostwhite;
+    html, body {
+      height: 100%;
+      font-family: "Segoe UI", sans-serif;
+      display: flex;
+      overflow: hidden;
+      background-color: var(--background);
     }
 
-    #canvas-container {
-      margin: 20px 20px 0px 20px;
-      height: 80%;
+    .toolbar {
+      width: 80px;
+      backdrop-filter: blur(12px);
+      background: var(--surface);
+      border: 1px solid var(--outline);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 6px;
+      margin: 16px;
+      gap: 14px;
+      z-index: 10;
     }
 
-    #canvas {
-      border: 1px solid #ccc;
-      touch-action: none;
-      /* Disable default touch actions to prevent scrolling */
-      width: 100%;
-      height: calc(100vh - 150px);
-      border-radius: 20px;
+    .toolbar label {
+      font-size: 11px;
+      color: #ddd;
+      text-align: center;
+    }
+
+    .tool-btn {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      transition: 0.25s ease;
+    }
+
+    .tool-btn:hover {
+      background: var(--hover-bg);
+      color: var(--primary);
+      transform: scale(1.05);
+    }
+
+    .tool-btn.active {
+      background: var(--primary);
+      color: var(--on-primary);
+      box-shadow: 0 2px 8px rgba(103, 80, 164, 0.4);
     }
 
     .color-picker {
-      height: 50px;
-      width: 50px;
-      border-radius: 0;
-      -webkit-border-radius: 50%;
-      -webkit-appearance: none;
       appearance: none;
+      -webkit-appearance: none;
+      border: 2px solid #777;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
       cursor: pointer;
+      background: none;
+      overflow: hidden;
+    }
+
+    .color-picker::-webkit-color-swatch-wrapper {
+      padding: 0;
     }
 
     .color-picker::-webkit-color-swatch {
       border: none;
-      width: 10px;
-      -webkit-border-radius: 100%;
-      -webkit-appearance: none;
-      appearance: none;
+      border-radius: 50%;
     }
 
-    .delete-icon,
-    .erase-icon,
-    .tools-icon,
-    .select-shape,
-    .move-canvas,
-    .color-fill,
-    .download {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 50%;
-      height: 50px;
-      width: 50px;
-      font-size: 20px;
-      color: white;
+    .stroke-select {
+      width: 48px;
+      height: 36px;
+      border-radius: 6px;
+      border: 1px solid var(--outline);
+      background: #111;
+      color: #fff;
+      font-size: 12px;
+      padding: 2px;
+      text-align: center;
       cursor: pointer;
     }
 
-    .select-shape,
-    .color-fill,
-    .move-canvas {
-      background: black;
-      color: whitesmoke;
-      margin-bottom: 5px;
+    .stroke-select:focus {
+      outline: 2px solid var(--primary);
     }
 
-    .download {
-      background: darkorange;
-      margin-bottom: 5px;
-    }
-
-    .delete-icon {
-      background: red;
-      color: white;
-    }
-
-    .erase-icon {
-      background: white;
-      color: black;
-    }
-
-    .tools-icon {
-      background: lightsteelblue;
-      color: black;
-    }
-
-    .tools-container {
+    .canvas-container {
+      flex: 1;
+      height: 100vh;
+      width: 100%;
       display: flex;
       align-items: center;
-      height: 10%;
-      background: #1e1e1e;
-      border-radius: 30px;
-      padding: 5px 10px;
-      margin: 0px 20px 0px 20px;
-      gap: 10px;
+      justify-content: center;
+      padding: 0;
     }
 
-    .tools-elements {
-      display: none;
-      position: absolute;
-      left: 30px;
-      bottom: 80px;
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 0;
+      border: none;
+      background: #fff;
+      touch-action: none;
     }
 
-    .slider {
-      width: 50px;
-    }
-
-    .fullscreen-canvas {
-      position: absolute;
-      top: 35px;
-      left: 35px;
-      color: black;
-      font-size: 18px;
-    }
-
-    .active {
-      background: rgb(0, 255, 170);
-      color: black;
-    }
-
-    @media screen and (min-width: 770px) {
-        .tools-elements {
-          margin-bottom: 60px;
-        }
-
-        .tools-container {
-          padding: 30px 20px;
-          border-radius: 80px;
-        }
+    .spacer {
+      height: 1px;
+      width: 100%;
+      background-color: #444;
     }
   </style>
 </head>
 
 <body>
-  <div class="main-container">
-    <div id="canvas-container">
-      <canvas id="canvas" class="canvas" height="1000" width="1000"></canvas>
-      <li id="tap-indicator" class="tap-indicator"></li>
-      <li class="fullscreen-canvas bi-fullscreen"></li>
-    </div>
-    <div class="controls">
-      <div class="tools-container">
-        <div class="tools">
-          <li class="tools-icon bi-caret-down-fill"></li>
-          <div class="tools-elements">
-            <li class="tool download bi-download"></li>
-            <li class="tool select-shape bi-subtract"></li>
-            <li class="tool color-fill bi-paint-bucket"></li>
-            <li class="tool move-canvas bi-arrows-move"></li>
-          </div>
-        </div>
+  <div class="toolbar">
+    <label for="color-picker">Color</label>
+    <input type="color" id="color-picker" class="color-picker" title="Choose drawing color" />
 
-        <input class="slider pencil-stroke" type="range" value="3" min="1" max="100"/>
+    <label for="strokeSize">Stroke</label>
+    <select id="strokeSize" class="stroke-select" title="Select stroke size"></select>
 
-        <div class="erase-container">
-          <li onclick="eraseMode()" class="erase-icon bi-eraser-fill"></li>
-        </div>
+    <div class="spacer"></div>
 
-        <div class="delete-canvas">
-          <li onclick="clearCanvas()" class="delete-icon bi-trash"></li>
-        </div>
+    <button class="tool-btn bi-pencil active" onclick="setMode('draw')" title="Draw"></button>
+    <button class="tool-btn bi-eraser-fill" onclick="toggleEraseMode()" title="Eraser"></button>
+    <button class="tool-btn bi-paint-bucket" onclick="fillCanvas()" title="Fill Canvas"></button>
 
-        <div class="color-picker-container">
-          <input id="color-picker" type="color" class="color-picker" />
-        </div>
-      </div>
-    </div>
+    <div class="spacer"></div>
+
+    <button class="tool-btn bi-trash" onclick="clearCanvas()" title="Clear Canvas"></button>
+    <button class="tool-btn bi-download" onclick="downloadCanvas()" title="Download Drawing"></button>
   </div>
 
-  <!-- Bootstrap JS and dependencies (jQuery and Popper.js) -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <div class="canvas-container">
+    <canvas id="canvas" width="3000" height="1200"></canvas>
+  </div>
 
   <script>
-    const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
     const colorPicker = document.getElementById("color-picker");
-    const eraseIcon = document.querySelector(".erase-icon");
-    const ctx = canvas.getContext('2d');
+    const strokeInput = document.getElementById("strokeSize");
+
     let isDrawing = false;
-    let eraseModeActive = false;
-    let mode = "pencil"
-    let lastX = 0;
-    let lastY = 0;
-    let isFillOn = false;
-    let strokeWidth = 3; // Default stroke width
+    let eraseMode = false;
     let strokeColor = colorPicker.value;
+    let strokeWidth;
 
-    const tapIndicator = document.getElementById('tap-indicator');
+    for (let i = 1; i <= 100; i += 4) {
+      const option = document.createElement("option");
+      option.value = i;
+      option.textContent = i;
+      strokeInput.appendChild(option);
+    }
+    strokeWidth = parseInt(strokeInput.value);
 
-    colorPicker.addEventListener('change', updatePencilColor);
-
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('touchstart', startDrawing);
-
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('touchmove', draw);
-
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
-    canvas.addEventListener('touchend', stopDrawing);
-
-    $(".erase-icon").click(function() {
-      $(this).toggleClass("active");
-    });
-
-    $(".color-fill").click(function() {
-      $(this).toggleClass("active");
-      if (!isFillOn) {
-        isFillOn = true;
-      }
-      else {
-        isFillOn = false;
-      }
-    });
-
-    $(".move-canvas").click(function() {
-      $(this).toggleClass("active");
-    })
-
-    $(".tools-icon").click(function() {
-      $(this).toggleClass("bi-caret-up-fill", "bi-caret-down-fill");
-      $(".tools-elements").toggle()
-    });
-
-    $(".pencil-stroke").on("change", function() {
-      changeStrokeWidth($(this).val());
-    });
-
-    $(".fullscreen-canvas").click(function() {
-      $(this).toggleClass("bi-x");
-      $(".tools-container").toggle();
-    });
-
-    $(".download").click(function() {
-      downloadCanvas();
-    });
-
-    function updatePencilColor() {
-      strokeColor = colorPicker.value;
+    function getMousePos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height),
+      };
     }
 
-    const scaleFactorX = canvas.width / canvas.offsetWidth;
-    const scaleFactorY = canvas.height / canvas.offsetHeight;
+    // Mouse events
+    canvas.addEventListener("mousedown", (e) => {
+      isDrawing = true;
+      const pos = getMousePos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    });
 
-    function startDrawing(e) {
-      if (isFillOn) {
-        fillCanvas(colorPicker.value);
-        return;
-      }
+    canvas.addEventListener("mousemove", (e) => {
+      if (!isDrawing) return;
+      const pos = getMousePos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = eraseMode ? "#ffffff" : strokeColor;
+      ctx.lineWidth = strokeWidth;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    });
 
+    canvas.addEventListener("mouseup", () => isDrawing = false);
+    canvas.addEventListener("mouseleave", () => isDrawing = false);
+
+    // Touch support
+    canvas.addEventListener("touchstart", (e) => {
       e.preventDefault();
       isDrawing = true;
-
-      const { x, y } = getCanvasCoordinates(e);
-    [lastX, lastY] = [x, y];
-
-      // Show and position tap indicator
-      tapIndicator.style.display = 'block';
-      updateTapIndicatorPosition(e);
-    }
-
-    function getCanvasCoordinates(event) {
-      const rect = canvas.getBoundingClientRect();
-      let clientX, clientY;
-
-      if (event.touches && event.touches.length > 0) {
-        clientX = event.touches[0].clientX;
-        clientY = event.touches[0].clientY;
-      } else {
-        clientX = event.clientX;
-        clientY = event.clientY;
-      }
-
-      const x = (clientX - rect.left) * scaleFactorX;
-      const y = (clientY - rect.top) * scaleFactorY;
-
-      return { x, y };
-    }
-
-    function draw(e) {
-      if (!isDrawing) return;
-      e.preventDefault();
-
-      const { x, y } = getCanvasCoordinates(e);
-
-      //ctx.lineJoin = "round";
-
+      const touch = e.touches[0];
+      const pos = getMousePos(touch);
       ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
-      ctx.lineTo(x, y);
-      ctx.strokeStyle = eraseModeActive ? '#f0f0f0' : strokeColor; // Erase or draw based on mode
+      ctx.moveTo(pos.x, pos.y);
+    });
+
+    canvas.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+      if (!isDrawing) return;
+      const touch = e.touches[0];
+      const pos = getMousePos(touch);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = eraseMode ? "#ffffff" : strokeColor;
       ctx.lineWidth = strokeWidth;
-      /*ctx.textAlign = "center"
-      ctx.font = "40px Ariel"
-      ctx.fillText("Hello World", canvas.width / 2, canvas.height / 2)*/ // todo
-      ctx.lineCap = 'round';
+      ctx.lineCap = "round";
       ctx.stroke();
+    });
 
-    [lastX, lastY] = [x, y];
-
-      // Update tap indicator position
-      updateTapIndicatorPosition(e);
-    }
-
-    function updateTapIndicatorPosition(e) {
-      const { x, y } = getCanvasCoordinates(e);
-
-      tapIndicator.style.left = `${x / scaleFactorX}px`;
-      tapIndicator.style.top = `${y / scaleFactorY}px`;
-    }
-
-    function stopDrawing() {
-      isDrawing = false;
-      tapIndicator.style.display = 'none'; // Hide tap indicator when drawing stops
-    }
+    canvas.addEventListener("touchend", () => isDrawing = false);
+    canvas.addEventListener("touchcancel", () => isDrawing = false);
 
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    function eraseMode() {
-      eraseModeActive = !eraseModeActive;
-      if (eraseModeActive) {
-        canvas.style.cursor = 'cell';
-      } else {
-        canvas.style.cursor = 'crosshair';
-      }
+    function toggleEraseMode() {
+      eraseMode = !eraseMode;
+      setActiveButton("bi-eraser-fill");
     }
 
-    function changeStrokeWidth(value) {
-      strokeWidth = parseInt(value);
+    function setMode(mode) {
+      eraseMode = false;
+      setActiveButton("bi-pencil");
     }
 
-    function fillCanvas(color) {
-      ctx.fillStyle = color;
+    function setActiveButton(className) {
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`.${className}`).classList.add("active");
+    }
+
+    function fillCanvas() {
+      ctx.fillStyle = colorPicker.value;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    function newDrawing() {
-      clearCanvas();
-      eraseModeActive = false;
-      canvas.style.cursor = 'crosshair';
-    }
-
     function downloadCanvas() {
-      // Convert canvas to data URL
-      const dataURL = canvas.toDataURL('image/png');
-
-      // Create temporary link element
-      const link = document.createElement('a');
-      link.href = dataURL;
-      link.download = 'canvas-image.png';
-
-      // Append to the body
-      document.body.appendChild(link);
-
-      // Trigger the download
+      const link = document.createElement("a");
+      link.download = "drawing.png";
+      link.href = canvas.toDataURL();
       link.click();
-
-      // Clean up
-      document.body.removeChild(link);
     }
 
+    colorPicker.addEventListener("change", () => (strokeColor = colorPicker.value));
+    strokeInput.addEventListener("change", () => (strokeWidth = parseInt(strokeInput.value)));
   </script>
-
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </body>
-
 </html>
